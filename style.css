@@ -26,11 +26,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* stage */
-#stage { position: fixed; inset: 0; overflow: hidden; touch-action: none; cursor: grab; outline: none; }
+#stage { position: fixed; inset: 0; overflow: hidden; background: radial-gradient(ellipse 75% 70% at 50% 50%, var(--bg) 45%, #1f2124 80%, #272a2e 100%); touch-action: none; cursor: grab; outline: none; }
 #stage.dragging { cursor: grabbing; }
 #world, #labels { position: absolute; inset: 0; pointer-events: none; }
 #links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-#links path { fill: none; stroke-width: 1.2; }
+#links path { fill: none; stroke-width: 0.7; }
 
 .thumb { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; pointer-events: auto; }
 .thumb, .thumb * { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }

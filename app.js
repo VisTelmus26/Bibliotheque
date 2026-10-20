@@ -200,7 +200,7 @@
         const r = f * (c.R - 50);
         const asp = clamp(p.aspect || 0.8, 0.5, 2);
         const w = 120 * Math.sqrt(asp), h = w / asp;
-        const depth = Math.sqrt(Math.max(0, c.R * c.R - r * r)) * 0.45;     // a cloud, not a disc
+        const depth = Math.sqrt(Math.max(0, c.R * c.R - r * r)) * 0.54;     // a cloud, not a disc
         const it = { p, c, x: c.x + Math.cos(a) * r * 1.08, y: c.y + Math.sin(a) * r * 0.92, z: c.z + (rand01(p.id) * 2 - 1) * depth, w, h };
         c.items.push(it);
         items.push(it);
@@ -251,12 +251,6 @@
     world.textContent = '';
     labels.textContent = '';
     svg.textContent = '';
-    for (const c of S.clusters) {
-      const hull = document.createElementNS(NS, 'path');
-      hull.setAttribute('class', 'hull' + (c.ai ? ' ai' : ''));
-      svg.append(hull);
-      c.hull = hull;
-    }
     for (const it of S.items) {
       const p = it.p;
       const node = el('div', 'thumb');
@@ -486,12 +480,11 @@
     const close = S.home && S.cam.z < S.home.z * 0.6;
     for (const cl of S.clusters) {
       const b = cl.b;
-      if (!b) { cl.title.style.visibility = 'hidden'; cl.hull.setAttribute('d', ''); continue; }
+      if (!b) { cl.title.style.visibility = 'hidden'; continue; }
       const onScreen = b.x1 > 120 && b.x0 < S.w - 120 && b.y1 > S.top + 80 && b.y0 < S.h - S.bottom;
       cl.title.style.visibility = onScreen ? '' : 'hidden';
       const x = clamp(b.x0, 16, S.w - 260), y = Math.max(b.y0 - 6, S.top + 58);
       cl.title.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) translateY(-100%)';
-      cl.hull.setAttribute('d', (b.x1 - b.x0) < S.w * 2.5 ? hullPath(cl.pts) : '');
     }
     for (const l of S.links) {
       const A = l.a, Bt = l.b;
