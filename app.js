@@ -180,7 +180,7 @@
       clusters.push({ key, label: label(key), n, R, x: best.x, y: best.y, ps: groups.get(key), ai: key === 'ai' });
     };
     for (const k of keys) place(k, groups.get(k).length, GAP);
-    if (groups.has('ai')) place('ai', groups.get('ai').length, GAP * 2.2, (x) => x * 0.6); // AI: kept apart, on the right
+    if (groups.has('ai')) place('ai', groups.get('ai').length, GAP * 2.2, (x) => x * 1.5); // AI: kept apart, on the right
     let mx = 0, my = 0;
     for (const c of clusters) { mx += c.x; my += c.y; }
     mx /= clusters.length; my /= clusters.length;
@@ -236,6 +236,9 @@
   }
 
   /* ---------- DOM ---------- */
+  // Thumbnails load through a free image resizer at 480px wide; the full image loads only when a piece is big on screen.
+  const small = (u) => 'https://images.weserv.nl/?url=' + encodeURIComponent(u) + '&w=480&fit=inside&output=webp&q=78';
+
   function placeholder(p) {
     const h = hash(p.id), h1 = h % 360, h2 = (h1 + 140 + (h >> 9) % 80) % 360;
     const ph = el('span', 'ph');
@@ -264,8 +267,13 @@
         img.decoding = 'async';
         img.referrerPolicy = 'no-referrer';
         img.draggable = false;
-        img.src = p.thumb;
-        img.onerror = () => img.replaceWith(placeholder(p));
+        img.src = small(p.thumb);
+        img.onerror = () => {
+          if (img.dataset.tried) { img.replaceWith(placeholder(p)); return; }
+          img.dataset.tried = '1';
+          img.src = p.thumb;             // the resizer failed: fall back to the original image
+        };
+        it.img = img;
         art.append(img);
       } else art.append(placeholder(p));
       if (p.kind === 'video') art.append(el('span', 'play'));
@@ -320,6 +328,8 @@
     };
   }
 
+  // Fit everything inside the free area of the screen (right of the title box, between menu and timeline),
+  // accounting for each piece's depth so nothing near the camera spills past the edges.
   function fit(items, animate) {
     if (!items.length) return;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, zMax = -Infinity, zMin = Infinity;
@@ -328,10 +338,18 @@
       y0 = Math.min(y0, it.y - it.h / 2); y1 = Math.max(y1, it.y + it.h / 2);
       zMax = Math.max(zMax, it.z); zMin = Math.min(zMin, it.z);
     }
-    const aw = Math.max(200, S.w - 120), ah = Math.max(160, S.h - S.top - S.bottom - 150);
-    const s = Math.min(aw / (x1 - x0), ah / (y1 - y0), 2.2);
-    const zMid = (zMax + zMin) / 2;
-    const to = { x: (x0 + x1) / 2, y: (y0 + y1) / 2 - 24 / s, z: zMid + F / s, yaw: 0, pitch: 0 };
+    const wide = S.w > 1100;
+    const L = wide ? 300 : 20, R = S.w - 20, T = S.top + 64, Bm = S.h - S.bottom - 10;
+    const hw = (R - L) / 2, hh = (Bm - T) / 2;
+    const cxw = (x0 + x1) / 2, cyw = (y0 + y1) / 2, zMid = (zMax + zMin) / 2;
+    let Z = zMax + 200;
+    for (const it of items) {
+      Z = Math.max(Z,
+        it.z + F * (Math.abs(it.x - cxw) + it.w / 2) * 1.1 / hw,
+        it.z + F * (Math.abs(it.y - cyw) + it.h / 2) * 1.1 / hh);
+    }
+    const c = center(), dz = Z - zMid;
+    const to = { x: cxw - ((L + R) / 2 - c.x) * dz / F, y: cyw - ((T + Bm) / 2 - c.y) * dz / F, z: Z, yaw: 0, pitch: 0 };
     if (S.filter === 'all') S.home = { ...to };
     moveTo(to, animate);
   }
@@ -466,6 +484,7 @@
       const op = it.dim ? 0.07 : Math.round(far * nearFade * 20) / 20;
       if (op !== it.op) { it.node.style.opacity = String(op); it.op = op; }
       it.node.style.pointerEvents = it.dim ? 'none' : '';
+      if (it.img && !it.full && W > 560 && !it.img.dataset.tried) { it.full = true; const big = new Image(); big.referrerPolicy = 'no-referrer'; big.onload = () => { it.img.src = it.p.thumb; }; big.src = it.p.thumb; }
       const near = W > 110 && !it.dim;
       if (near !== it.near) { it.node.classList.toggle('near', near); it.near = near; }
       it.sx = px; it.sy = py; it.sw = W; it.sh = H;
