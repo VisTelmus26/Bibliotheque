@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bibliotheque</title>
+<meta name="description" content="A weekly index of new design and animation from around the world.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Mono:wght@400;500&family=Geist:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage" aria-label="Inspiration space. Drag to move, scroll to zoom." tabindex="0">
+  <svg id="links" aria-hidden="true"></svg>
+  <div id="world"></div>
+  <div id="labels" aria-hidden="true"></div>
+</div>
+
+<header id="bar">
+  <a class="brand" href="./">Bibliotheque</a>
+  <nav id="topics" aria-label="Design and animation types"></nav>
+  <div class="bar-actions">
+    <button id="favBtn" class="pill" type="button" disabled title="Arrives in the next milestone">
+      <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14s-5.5-3.4-5.5-7.4A3 3 0 0 1 8 4.4a3 3 0 0 1 5.5 2.2C13.5 10.6 8 14 8 14z"/></svg>
+      Favourites
+    </button>
+  </div>
+</header>
+
+<aside id="titlebox" aria-live="polite">
+  <div class="tb-row">
+    <span class="tb-icon round"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none"/><circle cx="8" cy="8" r="2" class="fill"/></svg></span>
+    <div><div class="tb-k"><b>01</b> VIEW</div><div class="tb-v serif" id="tbView">All topics</div></div>
+  </div>
+  <div class="tb-link"></div>
+  <div class="tb-row">
+    <span class="tb-icon"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" fill="none"/><path d="M2 6.5h12"/></svg></span>
+    <div><div class="tb-k"><b>02</b> WEEK</div><div class="tb-v" id="tbWeek">…</div></div>
+  </div>
+  <div class="tb-link"></div>
+  <div class="tb-row">
+    <span class="tb-icon round"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="10" height="7" rx="1" fill="none"/><path d="M3 12h10M4.5 14.5h7"/></svg></span>
+    <div><div class="tb-k"><b>03</b> COLLECTED</div><div class="tb-v mono" id="tbCount">…</div></div>
+  </div>
+</aside>
+
+<div id="sampleNote" hidden>SAMPLE DATA · real pieces arrive with the first collection</div>
+<div id="hint">DRAG TO MOVE · SCROLL TO ZOOM · CLICK A PIECE TO FLY TO IT · ESC TO SEE ALL</div>
+
+<div id="legend" aria-label="Connection colours">
+  <div class="lg-k">CONNECTIONS</div>
+  <div><i style="background:var(--l-artist)"></i>SAME ARTIST</div>
+  <div><i style="background:var(--l-tool)"></i>SAME CODE / TOOL</div>
+  <div><i style="background:var(--l-style)"></i>SHARED STYLE</div>
+</div>
+
+<footer id="timeline" aria-label="Weeks">
+  <button id="prevWeek" class="round-btn" type="button" aria-label="Earlier week"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg></button>
+  <div id="track"><div id="line"></div></div>
+  <button id="nextWeek" class="round-btn" type="button" aria-label="Later week"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 1.5L7 5 3.5 8.5"/></svg></button>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

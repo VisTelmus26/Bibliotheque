@@ -1,0 +1,203 @@
+{
+ "weeks": [
+  {
+   "id": "2026-W38",
+   "start": "2026-09-14",
+   "end": "2026-09-20",
+   "count": 85,
+   "sample": true
+  },
+  {
+   "id": "2026-W39",
+   "start": "2026-09-21",
+   "end": "2026-09-27",
+   "count": 106,
+   "sample": true
+  },
+  {
+   "id": "2026-W40",
+   "start": "2026-09-28",
+   "end": "2026-10-04",
+   "count": 96,
+   "sample": true
+  },
+  {
+   "id": "2026-W41",
+   "start": "2026-10-05",
+   "end": "2026-10-11",
+   "count": 104,
+   "sample": true
+  },
+  {
+   "id": "2026-W42",
+   "start": "2026-10-12",
+   "end": "2026-10-18",
+   "count": 101,
+   "sample": true
+  },
+  {
+   "id": "2026-W43",
+   "start": "2026-10-19",
+   "end": "2026-10-25",
+   "count": 96,
+   "sample": true
+  }
+ ],
+ "groups": [
+  {
+   "key": "motion",
+   "label": "Motion & animation"
+  },
+  {
+   "key": "3d",
+   "label": "3D & CGI"
+  },
+  {
+   "key": "coded",
+   "label": "Coded animation"
+  },
+  {
+   "key": "graphic",
+   "label": "Graphic design"
+  },
+  {
+   "key": "type",
+   "label": "Type"
+  },
+  {
+   "key": "image",
+   "label": "Image & layout"
+  },
+  {
+   "key": "web",
+   "label": "Web design"
+  }
+ ],
+ "tags": [
+  {
+   "key": "motion",
+   "label": "Motion",
+   "since": "2026-W38"
+  },
+  {
+   "key": "graphic",
+   "label": "Graphic",
+   "since": "2026-W38"
+  },
+  {
+   "key": "type",
+   "label": "Type",
+   "since": "2026-W38"
+  },
+  {
+   "key": "2d",
+   "label": "2D",
+   "since": "2026-W38"
+  },
+  {
+   "key": "3d",
+   "label": "3D",
+   "since": "2026-W38"
+  },
+  {
+   "key": "after-effects",
+   "label": "After Effects",
+   "since": "2026-W38"
+  },
+  {
+   "key": "coded",
+   "label": "Coded",
+   "since": "2026-W38"
+  },
+  {
+   "key": "generative",
+   "label": "Generative",
+   "since": "2026-W38"
+  },
+  {
+   "key": "shaders",
+   "label": "Shaders",
+   "since": "2026-W43"
+  },
+  {
+   "key": "creative-code",
+   "label": "Creative code",
+   "since": "2026-W38"
+  },
+  {
+   "key": "kinetic-type",
+   "label": "Kinetic type",
+   "since": "2026-W38"
+  },
+  {
+   "key": "stop-motion",
+   "label": "Stop motion",
+   "since": "2026-W43"
+  },
+  {
+   "key": "illustration",
+   "label": "Illustration",
+   "since": "2026-W38"
+  },
+  {
+   "key": "ai",
+   "label": "AI",
+   "since": "2026-W38"
+  },
+  {
+   "key": "branding",
+   "label": "Branding",
+   "since": "2026-W38"
+  },
+  {
+   "key": "posters",
+   "label": "Posters",
+   "since": "2026-W38"
+  },
+  {
+   "key": "packaging",
+   "label": "Packaging",
+   "since": "2026-W38"
+  },
+  {
+   "key": "fonts",
+   "label": "Fonts",
+   "since": "2026-W38"
+  },
+  {
+   "key": "image",
+   "label": "Image",
+   "since": "2026-W38"
+  },
+  {
+   "key": "layout",
+   "label": "Layout",
+   "since": "2026-W38"
+  },
+  {
+   "key": "editorial",
+   "label": "Editorial",
+   "since": "2026-W38"
+  },
+  {
+   "key": "web",
+   "label": "Web design",
+   "since": "2026-W38"
+  },
+  {
+   "key": "ui",
+   "label": "UI",
+   "since": "2026-W38"
+  },
+  {
+   "key": "product",
+   "label": "Product viz",
+   "since": "2026-W38"
+  },
+  {
+   "key": "environments",
+   "label": "Environments",
+   "since": "2026-W43"
+  }
+ ]
+}
