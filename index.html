@@ -21,9 +21,9 @@
   <a class="brand" href="./">Bibliotheque</a>
   <nav id="topics" aria-label="Design and animation types"></nav>
   <div class="bar-actions">
-    <button id="favBtn" class="pill" type="button" disabled title="Arrives in the next milestone">
+    <button id="favBtn" class="pill" type="button" aria-pressed="false">
       <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14s-5.5-3.4-5.5-7.4A3 3 0 0 1 8 4.4a3 3 0 0 1 5.5 2.2C13.5 10.6 8 14 8 14z"/></svg>
-      Favourites
+      Favourites <span id="favN">0</span>
     </button>
   </div>
 </header>
@@ -58,6 +58,57 @@
 <footer id="timeline" aria-label="Weeks">
   <div id="track"><div id="line"></div></div>
 </footer>
+
+<section id="favs" hidden aria-label="Favourites">
+  <div id="favSphere"><div id="favWorld"></div></div>
+  <div class="fav-bar">
+    <button id="favBack" class="pill" type="button"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>Back to the space</button>
+    <div class="seg" role="group" aria-label="Which favourites">
+      <button id="favThis" type="button" aria-pressed="true">This week</button>
+      <button id="favAll" type="button" aria-pressed="false">All favourites</button>
+    </div>
+    <nav id="favWeeks" aria-label="Jump to a week"></nav>
+    <div id="favCount"></div>
+  </div>
+  <div id="favEmpty" hidden>
+    <div class="fe-t">No favourites here yet</div>
+    <div class="fe-d">Press the heart on any piece in the space, or in its preview, to keep it here.</div>
+  </div>
+  <div class="fav-hint">MOVE THE MOUSE TO LOOK AROUND · DRAG TO TURN · SCROLL TO ZOOM · CLICK A PIECE TO OPEN IT</div>
+</section>
+
+<div id="box" hidden>
+  <div class="bx-scrim" data-close></div>
+  <div class="bx-panel" role="dialog" aria-modal="true" aria-labelledby="bxTitle">
+    <div class="bx-media">
+      <div class="bx-tabs" id="bxTabs" hidden>
+        <button type="button" data-tab="preview" aria-pressed="true">Preview</button>
+        <button type="button" data-tab="site" aria-pressed="false">Live site</button>
+      </div>
+      <div class="bx-stage" id="bxStage"></div>
+      <div class="bx-note" id="bxNote" hidden></div>
+    </div>
+    <div class="bx-info">
+      <div class="bx-top">
+        <div class="bx-k" id="bxKicker"></div>
+        <button class="bx-close" type="button" aria-label="Close" data-close><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+      </div>
+      <h2 id="bxTitle"></h2>
+      <a id="bxArtist" target="_blank" rel="noopener"></a>
+      <div class="bx-meta" id="bxMeta"></div>
+      <div class="bx-chips" id="bxChips"></div>
+      <div class="bx-actions">
+        <button id="bxFav" class="bx-fav" type="button" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14s-5.5-3.4-5.5-7.4A3 3 0 0 1 8 4.4a3 3 0 0 1 5.5 2.2C13.5 10.6 8 14 8 14z"/></svg><span>Save to favourites</span></button>
+        <a id="bxOpen" class="bx-btn primary" target="_blank" rel="noopener">Open original ↗</a>
+        <a id="bxSite" class="bx-btn" target="_blank" rel="noopener" hidden>Visit site ↗</a>
+        <div class="bx-nav">
+          <button id="bxPrev" type="button">← Previous</button>
+          <button id="bxNext" type="button">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

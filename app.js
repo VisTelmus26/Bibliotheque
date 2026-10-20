@@ -60,6 +60,9 @@
     S.index.weeks.sort((a, b) => (a.id < b.id ? -1 : 1));
     S.weekIdx = S.index.weeks.length - 1;
     bind();
+    bindBox();
+    bindFavs();
+    updateFavCount();
     await loadWeek(S.weekIdx, false);
     loading.remove();
     requestAnimationFrame(frame);
@@ -90,6 +93,7 @@
     applyFilter();
     $('#tbWeek').textContent = startLabel(meta);
     $('#tbCount').textContent = wk.pieces.length + ' · ' + (wk.sources || 16) + ' sites';
+    S.weekMeta = meta;
     $('#sampleNote').hidden = !wk.sample;
     renderTimeline();
     fit(S.items.filter((it) => !it.dim), animate);
@@ -235,6 +239,8 @@
     for (const l of links) { l.a.ring = l.a.ring || LC[l.type]; l.b.ring = l.b.ring || LC[l.type]; }
   }
 
+  const HEART = '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14s-5.5-3.4-5.5-7.4A3 3 0 0 1 8 4.4a3 3 0 0 1 5.5 2.2C13.5 10.6 8 14 8 14z"/></svg>';
+
   /* ---------- DOM ---------- */
   // Thumbnails load through a free image resizer at 480px wide; the full image loads only when a piece is big on screen.
   const small = (u) => 'https://images.weserv.nl/?url=' + encodeURIComponent(u) + '&w=480&fit=inside&output=webp&q=78';
@@ -277,7 +283,10 @@
         art.append(img);
       } else art.append(placeholder(p));
       if (p.kind === 'video') art.append(el('span', 'play'));
-      art.addEventListener('click', (e) => { if (e.detail === 0) flyToItem(it); }); // keyboard; pointer clicks are handled on release
+      const dot = el('span', 'fdot');
+      dot.innerHTML = HEART;
+      art.append(dot);
+      art.addEventListener('click', (e) => { if (e.detail === 0) openBox(p, 'space'); }); // keyboard; pointer clicks are handled on release
 
       const cap = el('div', 'cap');
       const a = el('a', null, p.artist || 'Unknown artist');
@@ -289,12 +298,20 @@
       if (p.ai === true) top.append(el('span', 'badge ai', 'AI'));
       else if (p.ai === 'unconfirmed') top.append(el('span', 'badge', 'AI?'));
       else top.append(el('span', 'badge', 'ORIGINAL'));
+      const hb = el('button', 'hrt');
+      hb.type = 'button';
+      hb.innerHTML = HEART;
+      hb.setAttribute('aria-label', 'Save ' + (p.title || 'this piece') + ' to favourites');
+      hb.addEventListener('click', () => toggleFav(p));
+      top.append(hb);
+      it.hb = hb;
       cap.append(top, el('div', 'meta', [p.source, p.region].filter(Boolean).join(' · ').toUpperCase()));
 
       if (it.ring) { node.classList.add('linked'); node.style.setProperty('--ring', it.ring); }
       node.append(art, cap);
       world.append(node);
       it.node = node; it.vis = true; it.near = false; it.op = 1;
+      markFav(it);
     }
     for (const l of S.links) {
       const path = document.createElementNS(NS, 'path');
@@ -612,7 +629,7 @@
   function bind() {
     // press anywhere in the space (empty or on a piece) and drag
     document.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('#bar, #timeline, .cap a')) return;
+      if (e.target.closest('#bar, #timeline, .cap a, .cap .hrt, #box, #favs')) return;
       if (e.button !== 0 && e.button !== 2) return;
       e.preventDefault();
       S.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -660,7 +677,7 @@
         if (!S.moved) {
           const art = document.elementFromPoint(e.clientX, e.clientY);
           const node = art && art.closest('.thumb');
-          if (node) { const it = S.items.find((i) => i.node === node); if (it) flyToItem(it); }
+          if (node) { const it = S.items.find((i) => i.node === node); if (it) openBox(it.p, 'space'); }
         }
         setTimeout(() => { S.moved = false; }, 0);
       }
@@ -682,6 +699,15 @@
 
     addEventListener('keydown', (e) => {
       if (e.target.closest && e.target.closest('input, textarea')) return;
+      if (!$('#box').hidden) {
+        if (e.key === 'Escape') closeBox();
+        else if (e.key === 'ArrowRight') stepBox(1);
+        else if (e.key === 'ArrowLeft') stepBox(-1);
+        else return;
+        e.preventDefault();
+        return;
+      }
+      if (!$('#favs').hidden) { if (e.key === 'Escape') { closeFavs(); e.preventDefault(); } return; }
       const c = center();
       switch (e.key) {
         case 'ArrowLeft': pan(90, 0); break;
@@ -705,6 +731,283 @@
       clearTimeout(rt);
       rt = setTimeout(() => { measure(); renderTimeline(); S.dirty = true; }, 80);
     });
+  }
+
+  /* ---------- favourites (saved in this browser for now) ---------- */
+  const FKEY = 'bibliotheque.favourites.v1';
+  const WEEK_COLORS = [
+    ['#f5a524', '#1a1a1a'], ['#46a758', '#0d1a0f'], ['#3e8ef7', '#0b1424'], ['#8e6cf0', '#ffffff'],
+    ['#e93d82', '#ffffff'], ['#12a594', '#06201d'], ['#e5484d', '#ffffff']
+  ];
+  const weekColor = (id) => WEEK_COLORS[(parseInt(id.split('-W')[1], 10) || 0) % WEEK_COLORS.length];
+  let FAVS = {};
+  try { FAVS = JSON.parse(localStorage.getItem(FKEY) || '{}') || {}; } catch (e) { FAVS = {}; }
+  const saveFavs = () => { try { localStorage.setItem(FKEY, JSON.stringify(FAVS)); } catch (e) { /* storage blocked: hearts last for this visit only */ } };
+  const isFav = (p) => !!FAVS[p.id];
+
+  function toggleFav(p) {
+    if (FAVS[p.id]) delete FAVS[p.id];
+    else {
+      const wkId = p.id.split('-').slice(0, 2).join('-');
+      const meta = S.index.weeks.find((w) => w.id === wkId) || S.weekMeta || { id: wkId, start: '', end: '' };
+      FAVS[p.id] = { p, week: { id: meta.id, start: meta.start, end: meta.end }, at: Date.now() };
+    }
+    saveFavs();
+    for (const it of S.items) if (it.p.id === p.id) markFav(it);
+    updateFavCount();
+    if (BOX.p && BOX.p.id === p.id) setBoxFav();
+    if (!$('#favs').hidden) renderFavs(false);
+  }
+  function markFav(it) {
+    const f = isFav(it.p);
+    it.node.classList.toggle('faved', f);
+    if (it.hb) { it.hb.setAttribute('aria-pressed', String(f)); it.hb.setAttribute('aria-label', (f ? 'Remove ' : 'Save ') + (it.p.title || 'this piece') + (f ? ' from favourites' : ' to favourites')); }
+  }
+  function updateFavCount() { $('#favN').textContent = String(Object.keys(FAVS).length); }
+
+  /* ---------- the hovering box ---------- */
+  const BOX = { p: null, list: [], i: 0, ctx: 'space' };
+
+  function contextList(ctx) {
+    if (ctx === 'favs') return FV.list.map((f) => f.p);
+    const order = new Map(S.clusters.map((c, i) => [c, i]));
+    return S.items.filter((it) => !it.dim).sort((a, b) => order.get(a.c) - order.get(b.c)).map((it) => it.p);
+  }
+
+  function openBox(p, ctx) {
+    BOX.ctx = ctx;
+    BOX.list = contextList(ctx);
+    BOX.i = Math.max(0, BOX.list.findIndex((q) => q.id === p.id));
+    showBox(p);
+    $('#box').hidden = false;
+    $('#box .bx-close').focus({ preventScroll: true });
+  }
+  function closeBox() {
+    $('#bxStage').textContent = '';     // stops any playing video
+    $('#box').hidden = true;
+    BOX.p = null;
+  }
+  function stepBox(d) {
+    if (!BOX.list.length) return;
+    BOX.i = (BOX.i + d + BOX.list.length) % BOX.list.length;
+    showBox(BOX.list[BOX.i]);
+  }
+  function setBoxFav() {
+    const f = isFav(BOX.p), b = $('#bxFav');
+    b.setAttribute('aria-pressed', String(f));
+    b.querySelector('span').textContent = f ? 'In your favourites' : 'Save to favourites';
+  }
+
+  function showBox(p) {
+    BOX.p = p;
+    const stage = $('#bxStage'), note = $('#bxNote'), tabs = $('#bxTabs');
+    stage.textContent = '';
+    note.hidden = true;
+    const groupLabel = p.ai === true ? 'AI-generated' : ((S.index.groups || []).find((g) => g.key === p.group) || { label: p.group }).label;
+    $('#bxKicker').textContent = groupLabel + (p.region ? ' · ' + p.region : '');
+    $('#bxTitle').textContent = p.title || 'Untitled';
+    const a = $('#bxArtist');
+    a.textContent = p.artist || 'Unknown artist';
+    a.href = p.artistUrl || p.url || '#';
+    const meta = $('#bxMeta');
+    meta.textContent = '';
+    const wkId = p.id.split('-').slice(0, 2).join('-');
+    const wk = S.index.weeks.find((w) => w.id === wkId) || (FAVS[p.id] && FAVS[p.id].week);
+    meta.append(el('div', null, 'Found on ' + (p.source || 'the web')));
+    if (wk && wk.start) meta.append(el('div', null, 'Collected ' + wkLabel(wk) + ' · ' + rangeLabel(wk)));
+    meta.append(el('div', p.ai === true ? 'ai' : null, p.ai === true ? 'AI-generated' : p.ai === 'unconfirmed' ? 'May use AI (not confirmed)' : 'Original work'));
+    const chips = $('#bxChips');
+    chips.textContent = '';
+    for (const t of p.tools || []) chips.append(el('span', 'tool', t));
+    for (const t of p.styles || []) chips.append(el('span', null, t));
+    for (const t of p.tags || []) { const tag = (S.index.tags || []).find((x) => x.key === t); chips.append(el('span', null, tag ? tag.label : t)); }
+    const open = $('#bxOpen');
+    open.href = p.url || p.artistUrl || '#';
+    open.textContent = p.video ? 'Watch on ' + (p.video.type === 'vimeo' ? 'Vimeo' : p.video.type === 'youtube' ? 'YouTube' : 'the source') + ' ↗' : 'Open original ↗';
+    const site = $('#bxSite');
+    site.hidden = !p.site;
+    if (p.site) site.href = p.site;
+    setBoxFav();
+
+    const showPreview = () => {
+      stage.textContent = '';
+      note.hidden = true;
+      if (p.video && (p.video.type === 'youtube' || p.video.type === 'vimeo')) {
+        const f = document.createElement('iframe');
+        f.className = 'video';
+        f.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+        f.allowFullscreen = true;
+        f.title = p.title || 'Video';
+        f.src = p.video.type === 'youtube'
+          ? 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(p.video.id) + '?autoplay=1&rel=0'
+          : 'https://player.vimeo.com/video/' + encodeURIComponent(p.video.id) + '?autoplay=1&dnt=1';
+        stage.append(f);
+        return;
+      }
+      if (p.thumb) {
+        const img = new Image();
+        img.alt = p.title || '';
+        img.referrerPolicy = 'no-referrer';
+        img.src = p.thumb;
+        img.onerror = () => { if (!img.dataset.tried) { img.dataset.tried = '1'; img.src = small(p.thumb).replace('w=480', 'w=1400'); } else img.replaceWith(placeholder(p)); };
+        stage.append(img);
+      } else stage.append(placeholder(p));
+      if (p.kind === 'video') { note.hidden = false; note.textContent = 'This piece moves. Watch it on its original page with the button on the right.'; }
+    };
+    const showSite = () => {
+      stage.textContent = '';
+      const f = document.createElement('iframe');
+      f.title = 'Live site: ' + (p.title || '');
+      f.src = p.site;
+      f.referrerPolicy = 'no-referrer';
+      f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms');
+      stage.append(f);
+      note.hidden = false;
+      note.textContent = 'If the site stays blank, it doesn’t allow being shown inside other pages. Use “Visit site” to open it in a new tab.';
+    };
+    tabs.hidden = !p.site;
+    for (const b of tabs.querySelectorAll('button')) {
+      b.setAttribute('aria-pressed', String(b.dataset.tab === 'preview'));
+      b.onclick = () => {
+        for (const x of tabs.querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
+        if (b.dataset.tab === 'site') showSite(); else showPreview();
+      };
+    }
+    showPreview();
+  }
+
+  function bindBox() {
+    $('#box').addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeBox(); });
+    $('#bxFav').addEventListener('click', () => { if (BOX.p) toggleFav(BOX.p); });
+    $('#bxPrev').addEventListener('click', () => stepBox(-1));
+    $('#bxNext').addEventListener('click', () => stepBox(1));
+  }
+
+  /* ---------- favourites view: you stand inside a sphere, the favourites line its wall ---------- */
+  const FV = { list: [], mode: 'this', yaw: 0, pitch: 0, ty: 0, tp: 0, drag: null, persp: 700, R: 1100, raf: 0, tiles: [] };
+
+  function openFavs() {
+    $('#favs').hidden = false;
+    $('#favBtn').setAttribute('aria-pressed', 'true');
+    FV.mode = 'this';
+    renderFavs(true);
+    if (!FV.raf) FV.raf = requestAnimationFrame(favFrame);
+  }
+  function closeFavs() {
+    $('#favs').hidden = true;
+    $('#favBtn').setAttribute('aria-pressed', 'false');
+    cancelAnimationFrame(FV.raf);
+    FV.raf = 0;
+    S.dirty = true;                 // the space is exactly where you left it
+  }
+
+  function renderFavs(recentre) {
+    const curWeek = S.index.weeks[S.weekIdx].id;
+    const all = Object.values(FAVS).sort((a, b) => (a.week.id < b.week.id ? -1 : a.week.id > b.week.id ? 1 : a.at - b.at));
+    FV.list = FV.mode === 'this' ? all.filter((f) => f.week.id === curWeek) : all;
+    $('#favThis').setAttribute('aria-pressed', String(FV.mode === 'this'));
+    $('#favAll').setAttribute('aria-pressed', String(FV.mode === 'all'));
+    const weeks = [...new Map(all.map((f) => [f.week.id, f.week])).values()];
+    const nav = $('#favWeeks');
+    nav.textContent = '';
+    for (const w of weeks) {
+      const b = el('button');
+      b.type = 'button';
+      const dot = el('i');
+      dot.style.background = weekColor(w.id)[0];
+      b.append(dot, document.createTextNode(wkLabel(w)));
+      b.title = rangeLabel(w);
+      b.addEventListener('click', () => {
+        if (FV.mode === 'this' && w.id !== curWeek) { FV.mode = 'all'; renderFavs(false); }
+        const t = FV.tiles.find((x) => x.f.week.id === w.id);
+        if (t) { FV.ty = t.yaw; FV.tp = t.pitch; FV.base = { y: t.yaw, p: t.pitch }; }
+      });
+      nav.append(b);
+    }
+    $('#favCount').textContent = FV.list.length + (FV.list.length === 1 ? ' favourite' : ' favourites') + (FV.mode === 'this' ? ' · ' + wkLabel(S.index.weeks[S.weekIdx]) : ' · ' + weeks.length + (weeks.length === 1 ? ' week' : ' weeks'));
+    $('#favEmpty').hidden = FV.list.length > 0;
+
+    // lay the favourites on the inside of the sphere, row by row: oldest top-left, newest bottom-right
+    const world = $('#favWorld');
+    world.textContent = '';
+    const n = FV.list.length;
+    const rows = clamp(Math.round(Math.sqrt(n / 2.2)), 1, 4);
+    const cols = Math.max(1, Math.ceil(n / rows));
+    const dY = 268 / FV.R, dP = 338 / FV.R;
+    FV.tiles = FV.list.map((f, i) => {
+      const r = Math.floor(i / cols), c = i % cols;
+      const yaw = (c - (cols - 1) / 2) * dY, pitch = (r - (rows - 1) / 2) * dP;
+      const [col, ink] = weekColor(f.week.id);
+      const b = el('button', 'ft');
+      b.type = 'button';
+      b.style.setProperty('--wk', col);
+      b.style.setProperty('--ink', ink);
+      b.style.transform = 'rotateY(' + (-yaw).toFixed(4) + 'rad) rotateX(' + pitch.toFixed(4) + 'rad) translateZ(' + (-FV.R) + 'px)';
+      b.setAttribute('aria-label', (f.p.title || 'Untitled') + ' by ' + (f.p.artist || 'unknown') + ', ' + wkLabel(f.week));
+      const im = el('div', 'im');
+      if (f.p.thumb) {
+        const img = new Image();
+        img.alt = '';
+        img.referrerPolicy = 'no-referrer';
+        img.loading = 'lazy';
+        img.src = small(f.p.thumb);
+        img.onerror = () => { if (!img.dataset.tried) { img.dataset.tried = '1'; img.src = f.p.thumb; } else img.replaceWith(placeholder(f.p)); };
+        im.append(img);
+      } else im.append(placeholder(f.p));
+      im.append(el('div', 'who', f.p.artist || ''));
+      const lb = el('div', 'lb');
+      lb.append(el('b', null, wkLabel(f.week)), el('span', null, f.week.start ? rangeLabel(f.week) : ''));
+      b.append(im, lb);
+      b.addEventListener('click', () => { if (!FV.moved) openBox(f.p, 'favs'); });
+      world.append(b);
+      return { f, yaw, pitch, node: b };
+    });
+    FV.span = { y: (cols - 1) / 2 * dY, p: (rows - 1) / 2 * dP };
+    if (recentre) {
+      const first = FV.tiles[0];
+      FV.base = { y: first && FV.mode === 'all' ? FV.tiles[Math.max(0, FV.tiles.findIndex((t) => t.f.week.id === curWeek))].yaw : 0, p: 0 };
+      FV.yaw = FV.ty = FV.base.y; FV.pitch = FV.tp = 0;
+    }
+  }
+
+  function favFrame() {
+    FV.raf = requestAnimationFrame(favFrame);
+    FV.yaw += (FV.ty - FV.yaw) * 0.08;
+    FV.pitch += (FV.tp - FV.pitch) * 0.08;
+    $('#favSphere').style.perspective = FV.persp.toFixed(0) + 'px';
+    $('#favWorld').style.transform = 'translateZ(' + FV.persp.toFixed(0) + 'px) rotateX(' + (-FV.pitch).toFixed(4) + 'rad) rotateY(' + FV.yaw.toFixed(4) + 'rad)';
+  }
+
+  function bindFavs() {
+    $('#favBtn').addEventListener('click', () => ($('#favs').hidden ? openFavs() : closeFavs()));
+    $('#favBack').addEventListener('click', closeFavs);
+    $('#favThis').addEventListener('click', () => { FV.mode = 'this'; renderFavs(true); });
+    $('#favAll').addEventListener('click', () => { FV.mode = 'all'; renderFavs(true); });
+    const sph = $('#favs');
+    FV.base = { y: 0, p: 0 };
+    sph.addEventListener('pointermove', (e) => {
+      if (e.target.closest('.fav-bar')) return;
+      if (FV.drag) {
+        const dx = e.clientX - FV.drag.x, dy = e.clientY - FV.drag.y;
+        if (Math.hypot(dx, dy) > 4) FV.moved = true;
+        FV.base = { y: FV.drag.by + dx * 0.0022, p: clamp(FV.drag.bp - dy * 0.0022, -0.9, 0.9) };
+      }
+      // looking around follows the mouse, a little beyond the edges of the collection
+      const nx = (e.clientX / innerWidth - 0.5) * 2, ny = (e.clientY / innerHeight - 0.5) * 2;
+      const ry = Math.max(0.25, (FV.span ? FV.span.y : 0) * 0.6), rp = Math.max(0.15, (FV.span ? FV.span.p : 0) * 0.6);
+      FV.ty = FV.base.y + nx * ry;
+      FV.tp = clamp(FV.base.p + ny * rp, -0.9, 0.9);
+    });
+    sph.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.fav-bar')) return;
+      FV.drag = { x: e.clientX, y: e.clientY, by: FV.base.y, bp: FV.base.p };
+      FV.moved = false;
+    });
+    addEventListener('pointerup', () => { FV.drag = null; setTimeout(() => { FV.moved = false; }, 0); });
+    sph.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      FV.persp = clamp(FV.persp * Math.exp(-e.deltaY * 0.0012), 380, 1800);
+    }, { passive: false });
   }
 
   init();
