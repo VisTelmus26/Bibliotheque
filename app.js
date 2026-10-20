@@ -480,7 +480,7 @@
       it.node.style.zIndex = String(Math.round(100000 - depth));
       // atmosphere: far pieces fade, pieces you fly through fade out of the way
       const far = clamp(1 - (depth - S.focus * 1.3) / (S.focus * 2.2), 0.28, 1);
-      const nearFade = clamp((depth - 40) / 180, 0, 1);
+      const nearFade = clamp((S.w * 1.15 - W) / (S.w * 0.5), 0, 1);   // stays solid until it is bigger than the screen
       const op = it.dim ? 0.07 : Math.round(far * nearFade * 20) / 20;
       if (op !== it.op) { it.node.style.opacity = String(op); it.op = op; }
       it.node.style.pointerEvents = it.dim ? 'none' : '';
