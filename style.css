@@ -32,18 +32,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 #links path { fill: none; stroke-width: 1.2; }
 
-.thumb { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: auto; will-change: transform; }
+.thumb { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; pointer-events: auto; }
+.thumb, .thumb * { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
 .thumb .art { display: block; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 4px; overflow: hidden; background: #26282b; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); position: relative; }
 .thumb .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb .art .ph { position: absolute; inset: 0; }
 .thumb.linked .art { outline: 2px solid var(--ring, transparent); outline-offset: 3px; }
-.thumb.dim { opacity: 0.08; pointer-events: none; }
 .thumb .art:hover { filter: brightness(1.08); }
 .thumb .play { position: absolute; right: 6%; bottom: 6%; width: 18%; aspect-ratio: 1; border-radius: 50%; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; }
 .thumb .play::after { content: ""; border-left: 7px solid #fff; border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; margin-left: 2px; transform: scale(var(--ps, 1)); }
 
 /* constant-size caption under a thumb (counter-scaled in JS) */
-.cap { position: absolute; left: 0; top: 100%; transform-origin: 0 0; padding-top: 6px; white-space: nowrap; display: none; font-size: 12px; line-height: 1.35; }
+.cap { position: absolute; left: 0; top: 100%; padding-top: 6px; pointer-events: auto; -webkit-user-select: text; user-select: text; white-space: nowrap; display: none; font-size: 12px; line-height: 1.35; }
 .thumb.near .cap { display: block; }
 .cap a { color: var(--fg); text-decoration: none; font-weight: 500; }
 .cap a:hover { text-decoration: underline; }
@@ -57,7 +57,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .ctitle .c { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--accent); margin-top: 3px; }
 .ctitle.ai .c { color: var(--ai); }
 .ctitle.dim { opacity: 0.15; }
-.ring { position: absolute; left: 0; top: 0; border: 1px dashed rgba(177, 151, 252, 0.45); border-radius: 50%; }
+#links .hull { fill: rgba(255, 255, 255, 0.015); stroke: rgba(236, 236, 236, 0.16); stroke-width: 1; stroke-dasharray: 2 6; }
+#links .hull.ai { fill: rgba(177, 151, 252, 0.03); stroke: rgba(177, 151, 252, 0.5); }
 .llabel { position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 3px; background: var(--bg); border: 1px solid; white-space: nowrap; }
 
 /* menu bar */
@@ -89,7 +90,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 #hint, #sampleNote { position: fixed; z-index: 15; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--dim); pointer-events: none; }
 #hint { right: max(16px, env(safe-area-inset-right, 0px)); top: calc(var(--bar-h) + 14px); }
-#sampleNote { left: max(16px, env(safe-area-inset-left, 0px)); top: calc(var(--bar-h) + 222px); color: var(--accent); }
+#sampleNote { left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); color: var(--accent); }
 #hint { transition: opacity 0.6s; }
 #hint.gone { opacity: 0; }
 
@@ -99,7 +100,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #legend .lg-k { color: var(--dim); letter-spacing: 0.14em; }
 
 /* timeline */
-#timeline { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; height: calc(84px + env(safe-area-inset-bottom, 0px)); padding: 0 max(16px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 16px; background: linear-gradient(to top, var(--bg) 60%, rgba(22, 23, 24, 0)); }
+#timeline { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; height: calc(84px + env(safe-area-inset-bottom, 0px)); padding: 0 max(16px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; background: linear-gradient(to top, var(--bg) 60%, rgba(22, 23, 24, 0)); }
 .round-btn { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%; border: 1px solid var(--line-2); background: var(--bg); display: flex; align-items: center; justify-content: center; }
 .round-btn svg path { stroke: #c9ccd1; stroke-width: 1.4; fill: none; stroke-linecap: round; }
 .round-btn:disabled { opacity: 0.35; cursor: default; }
